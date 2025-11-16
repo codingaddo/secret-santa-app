@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "../../lib/supabaseClient";
 import type { Assignment, Participant } from "../../lib/types";
 import { useAuth } from "../../lib/auth";
 
-function shuffle<T>(items: T[]): T[] {
+function shuffleParticipants(items: Participant[]): Participant[] {
   const arr = [...items];
   for (let i = arr.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const [initializing, setInitializing] = useState(true);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [receiver, setReceiver] = useState<Participant | null>(null);
+  const [receiverId, setReceiverId] = useState<string | null>(null);
   const [others, setOthers] = useState<Participant[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [selectingId, setSelectingId] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export default function DashboardPage() {
       router.replace("/login");
       return;
     }
+    const currentParticipant = participant;
 
     async function load() {
       setError(null);
@@ -57,7 +59,7 @@ export default function DashboardPage() {
         await supabaseClient
           .from("assignments")
           .select("*")
-          .eq("giver_id", participant.id)
+          .eq("giver_id", currentParticipant.id)
           .maybeSingle<Assignment>();
 
       if (assignmentError) {
@@ -84,6 +86,7 @@ export default function DashboardPage() {
           );
         } else {
           setReceiver(receiverData);
+          setReceiverId(receiverData.id);
         }
         setInitializing(false);
         return;
@@ -95,7 +98,7 @@ export default function DashboardPage() {
         await supabaseClient
           .from("participants")
           .select("*")
-          .neq("id", participant.id);
+          .neq("id", currentParticipant.id);
 
       if (participantsError) {
         setError(
@@ -122,19 +125,12 @@ export default function DashboardPage() {
         );
       }
 
-      setOthers(participants ?? []);
+      setOthers(shuffleParticipants((participants ?? []) as Participant[]));
       setInitializing(false);
     }
 
     load();
   }, [authLoading, participant, router]);
-
-  const shuffledOthers = useMemo(
-    () => shuffle(others),
-    // Re-shuffle whenever we fetch a new list; this will randomize card order
-    // each time the page is loaded as requested.
-    [others]
-  );
 
   async function handleSelect(receiverId: string) {
     if (!participant || hasFinalized || selectingId) return;
@@ -142,7 +138,17 @@ export default function DashboardPage() {
     setSelectingId(receiverId);
 
     try {
-      const { data, error: rpcError } = await supabaseClient.rpc(
+      const rpcClient = supabaseClient as unknown as {
+        rpc: (
+          fn: string,
+          args: { giver_id: string; receiver_id: string }
+        ) => Promise<{
+          data: Participant | null;
+          error: { message?: string } | null;
+        }>;
+      };
+
+      const { data, error: rpcError } = await rpcClient.rpc(
         "finalize_assignment",
         {
           giver_id: participant.id,
@@ -178,6 +184,7 @@ export default function DashboardPage() {
               .maybeSingle<Participant>();
             if (receiverData) {
               setReceiver(receiverData);
+              setReceiverId(receiverData.id);
               setHasFinalized(true);
               return;
             }
@@ -196,7 +203,9 @@ export default function DashboardPage() {
       }
 
       // RPC returns the receiver participant row.
-      setReceiver(data as Participant);
+      const receiverParticipant = data as Participant;
+      setReceiver(receiverParticipant);
+      setReceiverId(receiverParticipant.id);
       setHasFinalized(true);
     } finally {
       setSelectingId(null);
@@ -225,7 +234,7 @@ export default function DashboardPage() {
     );
   }
 
-  const hasExistingAssignment = !!assignment || !!receiver;
+  const hasExistingAssignment = !!assignment || !!receiverId;
 
   return (
     <div className="space-y-6">
@@ -283,8 +292,8 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {shuffledOthers.map((p) => {
-              const isSelected = receiver?.id === p.id;
+            {others.map((p: Participant) => {
+              const isSelected = receiverId === p.id;
               const isTaken = takenReceiverIds.has(p.id);
               const disabled =
                 hasFinalized ||
