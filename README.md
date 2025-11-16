@@ -135,7 +135,7 @@ The frontend:
 1. **Clone the repository**:
 
    ```bash
-   git clone <your-repo-url> secret-santa-app
+   git clone https://github.com/codingaddo/secret-santa-app.git
    cd secret-santa-app
    ```
 
@@ -188,7 +188,7 @@ All schema definitions live in `supabase/schema.sql`. At a high level:
 - Notes:
   - This table is **pre-populated**; the app does not provide a UI to edit it.
   - `phone_number` is used as the **sole login identifier**.
-  - The app expects phone numbers stored in a **normalized canonical format** (e.g. `+233551817972`).
+  - The app expects phone numbers stored in a **normalized canonical format** (e.g. `+2331234567890`).
 
 ### `assignments`
 
@@ -255,6 +255,7 @@ values
 You can run this SQL in the Supabase SQL editor after creating the schema.
 
 > Important: The **login screen normalizes input**:
+>
 > - Inputs like `0551817972` or `+233 551817972` are converted to a canonical `+233551817972` format.
 > - You should store phone numbers in this normalized `+233...` form to match lookups.
 
@@ -271,6 +272,7 @@ Once dependencies and Supabase are configured:
    ```
 
 2. Open the app in your browser:
+
    - `http://localhost:3000`
 
 3. Ensure:
@@ -346,4 +348,3 @@ Once dependencies and Supabase are configured:
   - You can easily extend the design (animations, more festive styling, etc.) with TailwindCSS and React components.
 
 This README should give you enough context to understand, run, and extend the Secret Gift Picker app. For code-level details, explore the `app/`, `lib/`, and `supabase/` directories.
-
