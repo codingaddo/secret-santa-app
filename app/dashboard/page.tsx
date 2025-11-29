@@ -274,7 +274,7 @@ export default function DashboardPage() {
     // Finalize assignment after a short delay to let animation start
     setTimeout(() => {
       void handleSelect(id);
-    }, 2000);
+    }, 1000);
   }
 
   // Called when the reveal overlay animation completes
@@ -308,8 +308,12 @@ export default function DashboardPage() {
             <span className="text-lg">🎅</span>
           </div>
           <div>
-            <p className="text-xs text-slate-600 uppercase tracking-wider">Welcome back</p>
-            <p className="font-semibold text-slate-900">{participant.full_name}</p>
+            <p className="text-xs text-slate-600 uppercase tracking-wider">
+              Welcome back
+            </p>
+            <p className="font-semibold text-slate-900">
+              {participant.full_name}
+            </p>
           </div>
         </div>
         <button
@@ -318,8 +322,18 @@ export default function DashboardPage() {
           className="group flex items-center gap-2 rounded-full border border-white/50 bg-white/40 backdrop-blur-sm px-4 py-2 text-xs font-medium text-slate-700 hover:border-red-400 hover:text-red-600 hover:bg-white/60 transition-all duration-200"
         >
           <span>Log out</span>
-          <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <svg
+            className="w-4 h-4 transition-transform group-hover:translate-x-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+            />
           </svg>
         </button>
       </div>
@@ -337,15 +351,25 @@ export default function DashboardPage() {
           <div className="text-center space-y-3">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-linear-to-r from-red-500/20 to-green-500/20 border border-white/40">
               <span className="animate-sparkle">✨</span>
-              <span className="text-xs font-medium text-slate-700 uppercase tracking-wider">Time to pick!</span>
-              <span className="animate-sparkle" style={{ animationDelay: '0.5s' }}>✨</span>
+              <span className="text-xs font-medium text-slate-700 uppercase tracking-wider">
+                Time to pick!
+              </span>
+              <span
+                className="animate-sparkle"
+                style={{ animationDelay: "0.5s" }}
+              >
+                ✨
+              </span>
             </div>
             <h1 className="text-3xl font-bold bg-linear-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent">
               Choose Your Gift Recipient
             </h1>
             <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
-              Tap one of the magical gift boxes below to reveal who you&apos;ll be gifting to.
-              <span className="block mt-1 text-amber-700 font-medium">⚠️ Choose wisely — you only get one chance!</span>
+              Tap one of the magical gift boxes to reveal who you&apos;ll be
+              gifting to.
+              <span className="block mt-1 text-amber-700 font-medium">
+                ⚠️ Choose wisely — you only get one chance!
+              </span>
             </p>
           </div>
 
@@ -359,50 +383,73 @@ export default function DashboardPage() {
           {/* Raining gift boxes - mobile optimized */}
           <div className="relative h-[60vh] min-h-[350px] max-h-[500px] overflow-hidden rounded-2xl bg-linear-to-b from-slate-900/20 via-transparent to-slate-900/10">
             {/* Gift boxes raining down */}
-            {displayBoxes.map(({ participant: p, leftPercent, animationDelay, animationDuration }, index) => {
-              const isSelected = receiverId === p.id;
-              const isTaken = takenReceiverIds.has(p.id);
-              const disabled =
-                hasFinalized ||
-                isTaken ||
-                (!!selectingId && selectingId !== p.id) ||
-                (!!animatingId && animatingId !== p.id);
-              const isAnimating = animatingId === p.id;
+            {displayBoxes.map(
+              (
+                {
+                  participant: p,
+                  leftPercent,
+                  animationDelay,
+                  animationDuration,
+                },
+                index
+              ) => {
+                const isSelected = receiverId === p.id;
+                const isTaken = takenReceiverIds.has(p.id);
+                const disabled =
+                  hasFinalized ||
+                  isTaken ||
+                  (!!selectingId && selectingId !== p.id) ||
+                  (!!animatingId && animatingId !== p.id);
+                const isAnimating = animatingId === p.id;
 
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onBoxClick(p.id, disabled)}
-                  style={{
-                    left: `${Math.min(Math.max(leftPercent, 10), 75)}%`,
-                    animationDelay: `${animationDelay + index * 0.4}s`,
-                    animationDuration: `${animationDuration + 3}s`,
-                  }}
-                  className={`rain-gift absolute flex flex-col items-center p-2 rounded-xl transition-transform active:scale-95 ${isAnimating ? "opacity-0! scale-0!" : ""
-                    } ${isTaken
-                      ? "pointer-events-none opacity-30 grayscale"
-                      : isSelected
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onBoxClick(p.id, disabled)}
+                    style={{
+                      left: `${Math.min(Math.max(leftPercent, 10), 75)}%`,
+                      animationDelay: `${animationDelay + index * 0.4}s`,
+                      animationDuration: `${animationDuration + 3}s`,
+                    }}
+                    className={`rain-gift absolute flex flex-col items-center p-2 rounded-xl transition-transform active:scale-95 ${
+                      isAnimating ? "opacity-0! scale-0!" : ""
+                    } ${
+                      isTaken
+                        ? "pointer-events-none opacity-30 grayscale"
+                        : isSelected
                         ? "!animation-paused z-20 ring-4 ring-emerald-400 bg-emerald-500/30 shadow-2xl"
                         : "active:ring-2 active:ring-red-400 cursor-pointer"
-                    } ${disabled && !isSelected ? "pointer-events-none opacity-30" : ""}`}
-                >
-                  <div className={`relative ${!isTaken && !disabled ? "active:scale-110" : ""}`}>
-                    <Image
-                      src={isSelected ? "/open-box.png" : "/box.png"}
-                      alt="Gift box"
-                      width={64}
-                      height={64}
-                      className={`w-14 h-14 sm:w-16 sm:h-16 drop-shadow-xl ${isSelected ? "animate-bounce" : ""}`}
-                    />
-                    {!isTaken && !isSelected && !disabled && (
-                      <span className="absolute -top-1 -right-1 text-xs animate-pulse">✨</span>
-                    )}
-                  </div>
+                    } ${
+                      disabled && !isSelected
+                        ? "pointer-events-none opacity-30"
+                        : ""
+                    }`}
+                  >
+                    <div
+                      className={`relative ${
+                        !isTaken && !disabled ? "active:scale-110" : ""
+                      }`}
+                    >
+                      <Image
+                        src={isSelected ? "/open-box.png" : "/box.png"}
+                        alt="Gift box"
+                        width={64}
+                        height={64}
+                        className={`w-14 h-14 sm:w-16 sm:h-16 drop-shadow-xl ${
+                          isSelected ? "animate-bounce" : ""
+                        }`}
+                      />
+                      {!isTaken && !isSelected && !disabled && (
+                        <span className="absolute -top-1 -right-1 text-xs animate-pulse">
+                          ✨
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Label below box */}
-                  {/* <span className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                    {/* Label below box */}
+                    {/* <span className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
                     isTaken 
                       ? "bg-slate-400/50 text-slate-600" 
                       : isSelected 
@@ -411,15 +458,18 @@ export default function DashboardPage() {
                   }`}>
                     {isTaken ? "🔒" : isSelected ? `🎉 ${p.full_name}` : "🎁 Tap!"}
                   </span> */}
-                </button>
-              );
-            })}
+                  </button>
+                );
+              }
+            )}
 
             {/* Touch hint at bottom */}
             {displayBoxes.length > 0 && !hasFinalized && (
               <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
                 <div className="px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg animate-bounce">
-                  <span className="text-xs font-medium text-slate-700">👆 Tap a gift to reveal!</span>
+                  <span className="text-xs font-medium text-slate-700">
+                    👆 Tap a gift to reveal!
+                  </span>
                 </div>
               </div>
             )}
@@ -429,7 +479,9 @@ export default function DashboardPage() {
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
                 <span className="text-5xl mb-3">📭</span>
                 <p className="text-slate-700 font-medium">No gifts available</p>
-                <p className="text-xs text-slate-500">All participants have been assigned</p>
+                <p className="text-xs text-slate-500">
+                  All participants have been assigned
+                </p>
               </div>
             )}
           </div>

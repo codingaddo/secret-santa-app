@@ -93,7 +93,7 @@ export default function LoginPage() {
         </h1>
         <p className="text-slate-700 text-base max-w-md mx-auto">
           Enter your registered phone number to discover who you&apos;ll be
-          gifting to this holiday season
+          gifting this holiday season
         </p>
       </div>
 
@@ -129,7 +129,7 @@ export default function LoginPage() {
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full pl-12 pr-4 py-3.5 rounded-xl border-2 border-white/40 bg-white/40 text-slate-900 placeholder:text-slate-600 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 transition-all duration-200 backdrop-blur-md"
-              placeholder="+233 555 000 111"
+              placeholder="0244123456"
               disabled={submitting}
               aria-describedby={error ? "phone-error" : undefined}
             />
@@ -187,7 +187,7 @@ export default function LoginPage() {
               </>
             ) : (
               <>
-                <span>Continue to Dashboard</span>
+                <span>Continue</span>
                 <svg
                   className="h-5 w-5 transition-transform group-hover:translate-x-1"
                   fill="none"
@@ -228,8 +228,7 @@ export default function LoginPage() {
             <p className="text-sm font-medium text-slate-800">How it works</p>
             <p className="text-xs text-slate-700 leading-relaxed">
               Use the phone number you registered with to securely access your
-              Secret Santa assignment. Your gift recipient will be revealed on
-              the dashboard.
+              Secret Santa assignment. Your gift recipient will be revealed.
             </p>
           </div>
         </div>

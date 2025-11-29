@@ -16,13 +16,20 @@ export default function HasExistingAssignment({
         <div className="relative inline-flex items-center justify-center">
           <div className="absolute inset-0 w-20 h-20 rounded-full bg-linear-to-br from-red-500 to-green-500 blur-xl opacity-50 animate-pulse" />
           <div className="relative w-20 h-20 rounded-full bg-linear-to-br from-red-500 via-amber-500 to-green-500 flex items-center justify-center shadow-xl">
-            <span className="text-4xl animate-bounce" style={{ animationDuration: '2s' }}>🎁</span>
+            <span
+              className="text-4xl animate-bounce"
+              style={{ animationDuration: "2s" }}
+            >
+              🎁
+            </span>
           </div>
         </div>
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Assignment Confirmed</span>
+            <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">
+              Assignment Confirmed
+            </span>
           </div>
           <h1 className="text-4xl font-extrabold bg-linear-to-r from-red-500 via-amber-500 to-green-500 bg-clip-text text-transparent">
             Your Gift Assignment
@@ -54,10 +61,27 @@ export default function HasExistingAssignment({
           <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-white/50 to-white/30 backdrop-blur-xl p-8 transition-all duration-300 border border-white/40 shadow-xl">
             {/* Animated background pattern */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-4 left-4 text-5xl opacity-10 animate-float">❄️</div>
-              <div className="absolute top-16 right-8 text-4xl opacity-10 animate-float" style={{ animationDelay: '0.5s' }}>❄️</div>
-              <div className="absolute bottom-12 left-12 text-3xl opacity-10 animate-float" style={{ animationDelay: '1s' }}>❄️</div>
-              <div className="absolute bottom-4 right-4 text-4xl opacity-10 animate-float" style={{ animationDelay: '1.5s' }}>❄️</div>
+              <div className="absolute top-4 left-4 text-5xl opacity-10 animate-float">
+                ❄️
+              </div>
+              <div
+                className="absolute top-16 right-8 text-4xl opacity-10 animate-float"
+                style={{ animationDelay: "0.5s" }}
+              >
+                ❄️
+              </div>
+              <div
+                className="absolute bottom-12 left-12 text-3xl opacity-10 animate-float"
+                style={{ animationDelay: "1s" }}
+              >
+                ❄️
+              </div>
+              <div
+                className="absolute bottom-4 right-4 text-4xl opacity-10 animate-float"
+                style={{ animationDelay: "1.5s" }}
+              >
+                ❄️
+              </div>
               {/* Gradient orbs */}
               <div className="absolute -top-20 -right-20 w-40 h-40 bg-red-500/20 rounded-full blur-3xl" />
               <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-green-500/20 rounded-full blur-3xl" />
@@ -69,7 +93,7 @@ export default function HasExistingAssignment({
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-linear-to-r from-red-500/20 to-green-500/20 border border-white/50">
                   <span className="text-lg">🎅</span>
                   <p className="text-sm font-semibold text-slate-700 uppercase tracking-wider">
-                    You are gifting to
+                    You are gifting
                   </p>
                 </div>
               </div>
