@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabaseClient } from "../../lib/supabaseClient";
 import type { Assignment, Participant } from "../../lib/types";
 import { useAuth } from "../../lib/auth";
+import LoadingIndicator from "./components/LoadingIndicator";
+import HasExistingAssignment from "./components/HasExistingAssignment";
+import GiftRevealOverlay from "./components/GiftRevealOverlay";
 
 function shuffleParticipants(items: Participant[]): Participant[] {
   const arr = [...items];
@@ -30,6 +34,44 @@ export default function DashboardPage() {
   const [takenReceiverIds, setTakenReceiverIds] = useState<Set<string>>(
     () => new Set()
   );
+
+  // Get all eligible participants for the raining gift boxes
+  const displayBoxes = useMemo(() => {
+    // Build list of eligible participants
+    const eligible = others.filter((p: Participant) => {
+      const isTaken = takenReceiverIds.has(p.id);
+      const isSelected = receiverId === p.id;
+      return !isTaken || isSelected;
+    });
+
+    if (eligible.length === 0) return [];
+
+    // Deterministic seeded random generator based on participant id
+    const seeded = (seed: string, salt = 0) => {
+      let h = 2166136261 >>> 0;
+      for (let i = 0; i < seed.length; i += 1) {
+        h ^= seed.charCodeAt(i);
+        h = (h * 16777619) >>> 0;
+      }
+      h = (h + salt) >>> 0;
+      const n = Math.abs(Math.sin(h) * 10000);
+      return n - Math.floor(n);
+    };
+
+    // Give each box a random horizontal position and animation delay for rain effect
+    return eligible.map((p) => ({
+      participant: p,
+      leftPercent: Math.round(5 + seeded(p.id, 1) * 90), // spread across 5-95% width
+      animationDelay: seeded(p.id, 2) * 2, // 0-2s delay for staggered rain
+      animationDuration: 3 + seeded(p.id, 3) * 2, // 3-5s fall duration
+      swayAmount: 10 + seeded(p.id, 4) * 20, // 10-30px sway
+    }));
+  }, [others, takenReceiverIds, receiverId]);
+
+  // Animation states for the gift reveal flow
+  const [animatingId, setAnimatingId] = useState<string | null>(null);
+  const [showRevealOverlay, setShowRevealOverlay] = useState(false);
+  const [revealName, setRevealName] = useState("");
 
   function handleLogout() {
     // Clear the stored participant for this demo login.
@@ -212,17 +254,38 @@ export default function DashboardPage() {
     }
   }
 
+  // Wrapper used by the UI so we animate the selection locally before
+  // finalizing it with the server. We intentionally DO NOT set
+  // `selectingId` here (handleSelect will do that) so the RPC isn't
+  // short-circuited by the early guard in handleSelect.
+  function onBoxClick(id: string, disabled: boolean) {
+    if (disabled) return;
+
+    // Find the participant name for the reveal
+    const selectedParticipant = others.find((p) => p.id === id);
+    if (selectedParticipant) {
+      setRevealName(selectedParticipant.full_name);
+    }
+
+    // Start the local animation overlay
+    setAnimatingId(id);
+    setShowRevealOverlay(true);
+
+    // Finalize assignment after a short delay to let animation start
+    setTimeout(() => {
+      void handleSelect(id);
+    }, 2000);
+  }
+
+  // Called when the reveal overlay animation completes
+  const handleRevealComplete = useCallback(() => {
+    setAnimatingId(null);
+    setShowRevealOverlay(false);
+    setRevealName("");
+  }, []);
+
   if (authLoading || initializing) {
-    return (
-      <div className="space-y-4">
-        <h1 className="text-2xl font-semibold text-slate-50">
-          Secret Santa 🎁
-        </h1>
-        <p className="text-sm text-slate-400">
-          Loading your gift assignment...
-        </p>
-      </div>
-    );
+    return <LoadingIndicator />;
   }
 
   if (!participant) {
@@ -237,112 +300,179 @@ export default function DashboardPage() {
   const hasExistingAssignment = !!assignment || !!receiverId;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between text-sm text-slate-300">
-        <p>
-          <span className="font-medium text-slate-50">
-            {participant.full_name}
-          </span>
-        </p>
+    <div className="space-y-8">
+      {/* Header with welcome and logout */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-full bg-linear-to-br from-red-500 to-green-500 shadow-lg">
+            <span className="text-lg">🎅</span>
+          </div>
+          <div>
+            <p className="text-xs text-slate-600 uppercase tracking-wider">Welcome back</p>
+            <p className="font-semibold text-slate-900">{participant.full_name}</p>
+          </div>
+        </div>
         <button
           type="button"
           onClick={handleLogout}
-          className="rounded-full border border-slate-600 bg-slate-900 px-3 py-1 text-xs font-medium text-slate-200 hover:border-emerald-400 hover:text-emerald-200"
+          className="group flex items-center gap-2 rounded-full border border-white/50 bg-white/40 backdrop-blur-sm px-4 py-2 text-xs font-medium text-slate-700 hover:border-red-400 hover:text-red-600 hover:bg-white/60 transition-all duration-200"
         >
-          Log out
+          <span>Log out</span>
+          <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
         </button>
       </div>
       {error && (
-        <div className="rounded-lg border border-red-500/50 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+        <div className="rounded-lg border border-red-500/50 bg-red-500/20 backdrop-blur-sm px-3 py-2 text-sm text-red-800">
           {error}
         </div>
       )}
 
       {hasExistingAssignment ? (
-        <div className="space-y-3">
-          <h1 className="text-2xl font-semibold text-slate-50">
-            Your gift assignment 🎁
-          </h1>
-          <p className="text-sm text-slate-400">
-            This is your permanent Secret Santa assignment. You cannot change
-            it.
-          </p>
-          {receiver && (
-            <div className="mt-4 rounded-xl bg-slate-800 px-4 py-5 shadow-lg shadow-slate-950/40">
-              <p className="text-sm text-slate-400">You are gifting:</p>
-              <p className="mt-1 text-lg font-semibold text-slate-50">
-                {receiver.full_name}
-              </p>
-              <p className="mt-1 text-sm text-slate-400">
-                Phone: {receiver.phone_number}
-              </p>
-            </div>
-          )}
-        </div>
+        <HasExistingAssignment receiver={receiver} />
       ) : (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-slate-50">
-              Choose who you will gift 🎁
+        <div className="space-y-6">
+          {/* Section header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-linear-to-r from-red-500/20 to-green-500/20 border border-white/40">
+              <span className="animate-sparkle">✨</span>
+              <span className="text-xs font-medium text-slate-700 uppercase tracking-wider">Time to pick!</span>
+              <span className="animate-sparkle" style={{ animationDelay: '0.5s' }}>✨</span>
+            </div>
+            <h1 className="text-3xl font-bold bg-linear-to-r from-red-600 via-green-600 to-red-600 bg-clip-text text-transparent">
+              Choose Your Gift Recipient
             </h1>
-            <p className="text-sm text-slate-400">
-              Tap one card to reveal your recipient. You only get one chance,
-              and your selection will be saved permanently.
+            <p className="text-sm text-slate-600 max-w-md mx-auto leading-relaxed">
+              Tap one of the magical gift boxes below to reveal who you&apos;ll be gifting to.
+              <span className="block mt-1 text-amber-700 font-medium">⚠️ Choose wisely — you only get one chance!</span>
             </p>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {others.map((p: Participant) => {
+          {/* Gift Reveal Overlay Component */}
+          <GiftRevealOverlay
+            isVisible={showRevealOverlay && !receiver}
+            recipientName={revealName}
+            onComplete={handleRevealComplete}
+          />
+
+          {/* Raining gift boxes - mobile optimized */}
+          <div className="relative h-[60vh] min-h-[350px] max-h-[500px] overflow-hidden rounded-2xl bg-linear-to-b from-slate-900/20 via-transparent to-slate-900/10">
+            {/* Gift boxes raining down */}
+            {displayBoxes.map(({ participant: p, leftPercent, animationDelay, animationDuration }, index) => {
               const isSelected = receiverId === p.id;
               const isTaken = takenReceiverIds.has(p.id);
               const disabled =
                 hasFinalized ||
                 isTaken ||
-                (!!selectingId && selectingId !== p.id);
+                (!!selectingId && selectingId !== p.id) ||
+                (!!animatingId && animatingId !== p.id);
+              const isAnimating = animatingId === p.id;
 
               return (
                 <button
                   key={p.id}
                   type="button"
                   disabled={disabled}
-                  onClick={() => handleSelect(p.id)}
-                  className={`flex h-32 items-center justify-center rounded-xl border text-center text-sm font-medium transition ${
-                    isSelected
-                      ? "border-emerald-400 bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-900/50"
-                      : isTaken
-                      ? "border-slate-800 bg-slate-900/40 text-slate-500"
-                      : "border-slate-700 bg-slate-900 text-slate-100 hover:border-emerald-400 hover:bg-slate-800"
-                  } ${
-                    disabled && !isSelected
-                      ? "opacity-40 hover:border-slate-700 hover:bg-slate-900"
-                      : ""
-                  }`}
+                  onClick={() => onBoxClick(p.id, disabled)}
+                  style={{
+                    left: `${Math.min(Math.max(leftPercent, 10), 75)}%`,
+                    animationDelay: `${animationDelay + index * 0.4}s`,
+                    animationDuration: `${animationDuration + 3}s`,
+                  }}
+                  className={`rain-gift absolute flex flex-col items-center p-2 rounded-xl transition-transform active:scale-95 ${isAnimating ? "opacity-0! scale-0!" : ""
+                    } ${isTaken
+                      ? "pointer-events-none opacity-30 grayscale"
+                      : isSelected
+                        ? "!animation-paused z-20 ring-4 ring-emerald-400 bg-emerald-500/30 shadow-2xl"
+                        : "active:ring-2 active:ring-red-400 cursor-pointer"
+                    } ${disabled && !isSelected ? "pointer-events-none opacity-30" : ""}`}
                 >
-                  {isSelected ? (
-                    <div>
-                      <p className="text-xs text-emerald-950/90">
-                        You will be gifting
-                      </p>
-                      <p className="mt-1 text-base font-semibold">
-                        {p.full_name}
-                      </p>
-                      <p className="mt-1 text-xs text-emerald-950/90">
-                        Phone: {p.phone_number}
-                      </p>
-                    </div>
-                  ) : selectingId === p.id ? (
-                    "Revealing..."
-                  ) : isTaken ? (
-                    "Already selected"
-                  ) : (
-                    "Tap to reveal 🎁"
-                  )}
+                  <div className={`relative ${!isTaken && !disabled ? "active:scale-110" : ""}`}>
+                    <Image
+                      src={isSelected ? "/open-box.png" : "/box.png"}
+                      alt="Gift box"
+                      width={64}
+                      height={64}
+                      className={`w-14 h-14 sm:w-16 sm:h-16 drop-shadow-xl ${isSelected ? "animate-bounce" : ""}`}
+                    />
+                    {!isTaken && !isSelected && !disabled && (
+                      <span className="absolute -top-1 -right-1 text-xs animate-pulse">✨</span>
+                    )}
+                  </div>
+
+                  {/* Label below box */}
+                  {/* <span className={`mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap ${
+                    isTaken 
+                      ? "bg-slate-400/50 text-slate-600" 
+                      : isSelected 
+                        ? "bg-emerald-500 text-white shadow-lg" 
+                        : "bg-white/80 text-slate-700 shadow-sm"
+                  }`}>
+                    {isTaken ? "🔒" : isSelected ? `🎉 ${p.full_name}` : "🎁 Tap!"}
+                  </span> */}
                 </button>
               );
             })}
+
+            {/* Touch hint at bottom */}
+            {displayBoxes.length > 0 && !hasFinalized && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center pointer-events-none">
+                <div className="px-4 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg animate-bounce">
+                  <span className="text-xs font-medium text-slate-700">👆 Tap a gift to reveal!</span>
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {displayBoxes.length === 0 && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
+                <span className="text-5xl mb-3">📭</span>
+                <p className="text-slate-700 font-medium">No gifts available</p>
+                <p className="text-xs text-slate-500">All participants have been assigned</p>
+              </div>
+            )}
           </div>
         </div>
       )}
+      <style jsx>{`
+        .rain-gift {
+          top: -100px;
+          animation: rainDown 6s ease-in-out infinite;
+        }
+
+        .rain-gift:active {
+          animation-play-state: paused;
+        }
+
+        @keyframes rainDown {
+          0% {
+            top: -100px;
+            opacity: 0;
+            transform: translateX(0) rotate(-5deg);
+          }
+          5% {
+            opacity: 1;
+          }
+          25% {
+            transform: translateX(15px) rotate(3deg);
+          }
+          50% {
+            transform: translateX(-10px) rotate(-3deg);
+          }
+          75% {
+            transform: translateX(8px) rotate(2deg);
+          }
+          95% {
+            opacity: 1;
+          }
+          100% {
+            top: calc(100% + 20px);
+            opacity: 0;
+            transform: translateX(0) rotate(5deg);
+          }
+        }
+      `}</style>
     </div>
   );
 }

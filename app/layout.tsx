@@ -30,8 +30,20 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-950 text-slate-50`}
       >
         <AuthProvider>
-          <div className="flex min-h-screen items-center justify-center px-4">
-            <div className="w-full max-w-3xl rounded-2xl bg-slate-900/80 p-6 shadow-xl ring-1 ring-slate-800">
+          <div
+            className="relative flex min-h-screen items-center justify-center px-4 py-8 bg-cover bg-center bg-fixed"
+            style={{ backgroundImage: "url(/bg.jpg)" }}
+          >
+            {/* Subtle gradient overlay for better readability */}
+            <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/30 pointer-events-none" />
+
+            <div className="relative w-full max-w-3xl rounded-3xl bg-white/35 backdrop-blur-xl p-8 shadow-2xl ring-1 ring-white/30 animate-glow">
+              {/* Decorative corner accents */}
+              <div className="absolute -top-2 -left-2 w-6 h-6 border-t-4 border-l-4 border-red-500/60 rounded-tl-xl" />
+              <div className="absolute -top-2 -right-2 w-6 h-6 border-t-4 border-r-4 border-green-500/60 rounded-tr-xl" />
+              <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-4 border-l-4 border-green-500/60 rounded-bl-xl" />
+              <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-4 border-r-4 border-red-500/60 rounded-br-xl" />
+
               {children}
               <Analytics />
             </div>
