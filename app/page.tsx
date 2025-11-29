@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../lib/auth";
+import LoadingIndicator from "./dashboard/components/LoadingIndicator";
 
 export default function Home() {
   const router = useRouter();
@@ -16,11 +17,11 @@ export default function Home() {
       router.replace("/login");
     }
   }, [participant, loading, router]);
+  if (loading) return <LoadingIndicator />;
 
   return (
     <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-center text-slate-100">
-      <p className="text-sm text-slate-400">Loading your Secret Santa...</p>
+      <p className="text-sm text-slate-400">Preparing your Secret Santa...</p>
     </div>
   );
 }
-
